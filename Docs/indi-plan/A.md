@@ -1,7 +1,7 @@
 # Person A — Identity Service + API Gateway
 
 **Owns:** `identity-service` (8081), `api-gateway` (8080)  
-**Branch:** `feature/identity-gateway`  
+**Branch:** `feature/identity-gateway` (work currently on `pias`; rename/PR later)  
 **Do not edit:** other service folders (ask the owner + update `Docs/CONTRACTS.md` first)
 
 > Read this after [`Docs/CONTRACTS.md`](../CONTRACTS.md) and the root [`README.md`](../../README.md).  
@@ -9,9 +9,9 @@
 
 ---
 
-## What is already done in the repo
+## Code status — complete (no runtime yet)
 
-You are **not** starting from Spring Initializr. The scaffold already includes compiling code for both of your services.
+Person A **coding ownership is done**. Do not treat missing Docker/Eureka/Postman runs as incomplete code.
 
 ### `identity-service`
 
@@ -19,12 +19,14 @@ You are **not** starting from Spring Initializr. The scaffold already includes c
 |-------|----------|--------|
 | App + Eureka client | `IdentityServiceApplication.java` | Done |
 | `User` entity (`role` column, BCrypt password) | `model/User.java` | Done |
-| DTOs | `RegisterRequest`, `LoginRequest`, `AuthResponse` | Done |
+| DTOs | `RegisterRequest`, `LoginRequest`, `AuthResponse`, `MeResponse`, `ErrorResponse` | Done |
 | `UserRepository.findByEmail` | `repository/UserRepository.java` | Done |
 | JWT util (claims `userId`, `role`, no expiry) | `security/JwtUtil.java` | Done |
 | Security (stateless, permit `/auth/**`) | `security/SecurityConfig.java` | Done |
 | Register / login | `AuthService` + `AuthController` | Done |
-| Role allowlist + error JSON + `GET /auth/me` | `AuthService`, `GlobalExceptionHandler`, `MeResponse` | Done (code-only) |
+| Role allowlist (`RIDER`/`DRIVER`) + email normalize | `AuthService` | Done |
+| Consistent error JSON | `exception/GlobalExceptionHandler.java` | Done |
+| `GET /auth/me` (Bearer checked in service) | `AuthController` + `AuthService` | Done |
 | Config | port 8081, `identity_db`, JWT secret | Done |
 
 ### `api-gateway`
@@ -33,15 +35,22 @@ You are **not** starting from Spring Initializr. The scaffold already includes c
 |-------|----------|--------|
 | Reactive gateway + Eureka | `GatewayApplication.java` | Done |
 | Routes `/api/...` → `lb://...` + strip `/api` | `config/RouteConfig.java` | Done |
-| JWT `GlobalFilter` (skip `/api/auth/**`) | `filter/JwtAuthFilter.java` | Done |
+| JWT `GlobalFilter` (open `/api/auth` and `/api/auth/**` only) | `filter/JwtAuthFilter.java` | Done |
 | LoadBalancer dependency | `pom.xml` | Done |
-| Config | port 8080, JWT secret | Done |
+| Config | port 8080, JWT secret, `web-application-type: reactive` | Done |
+
+### Shared artifacts
+
+| Piece | Location | Status |
+|-------|----------|--------|
+| Postman identity folder | `postman/Uthao.postman_collection.json` | Done (Register Rider, Register Driver, Login, Get Me) |
+| Shared JWT secret | `uthao-super-secret-jwt-key-2024` | Must match `CONTRACTS.md` |
 
 **Shared secret (must not change alone):** `uthao-super-secret-jwt-key-2024`
 
 ---
 
-## Sequential steps (follow in order)
+## Sequential steps (reference — original order)
 
 ### Step 0 — Setup (15–20 min)
 
@@ -57,8 +66,6 @@ You are **not** starting from Spring Initializr. The scaffold already includes c
    ```
 5. Confirm Postgres has `identity_db` and RabbitMQ UI loads at http://localhost:15672 (you won’t publish events, but compose must be healthy for the team).
 
----
-
 ### Step 1 — Walk the existing Identity code (30–45 min)
 
 Open and understand (don’t rewrite blindly):
@@ -71,8 +78,6 @@ Open and understand (don’t rewrite blindly):
 
 **Acceptance:** You can explain register → hash → token without looking at notes.
 
----
-
 ### Step 2 — Run Identity alone and test with Postman (45–60 min)
 
 1. Start **Eureka** (Person B’s service — or ask them to leave it running). Until Eureka is up, Identity may still boot but won’t register.
@@ -80,123 +85,51 @@ Open and understand (don’t rewrite blindly):
    ```bash
    mvn spring-boot:run
    ```
-3. Hit Identity **directly** (bypass gateway first):
-
-   **Register rider**
-   ```http
-   POST http://localhost:8081/auth/register
-   Content-Type: application/json
-
-   {
-     "name": "Alice Rider",
-     "email": "alice@example.com",
-     "password": "password123",
-     "role": "RIDER"
-   }
-   ```
-
-   **Register driver**
-   ```http
-   POST http://localhost:8081/auth/register
-   {
-     "name": "Karim Driver",
-     "email": "karim@example.com",
-     "password": "password123",
-     "role": "DRIVER"
-   }
-   ```
-
-   **Login**
-   ```http
-   POST http://localhost:8081/auth/login
-   {
-     "email": "alice@example.com",
-     "password": "password123"
-   }
-   ```
-
+3. Hit Identity **directly** (bypass gateway first): register rider, register driver, login.
 4. Verify in Postgres (`identity_db` → `users`): password is **hashed**, not plaintext.
-5. Negative cases to harden if missing:
-   - Duplicate email → should be `409` / conflict (already in scaffold).
-   - Wrong password → `401`.
-   - Invalid body (blank email) → validation error.
+5. Negative cases: duplicate email → `409`; wrong password → `401`; invalid body → validation error.
 
 **Acceptance:** Register + login return `{ token, userId, name, role }`.
 
----
+### Step 3 — Harden Identity (done in code)
 
-### Step 3 — Harden Identity (1–2 h, only if needed)
-
-Work **inside** `identity-service` only. Suggested improvements (pick what fails in Step 2):
-
-1. Clearer error messages / consistent HTTP status codes.
-2. Normalize `role` to uppercase (`RIDER` / `DRIVER`) and reject unknown roles.
-3. Optional stretch from the plan: `GET /auth/me` that decodes the Bearer token and returns user info (useful for demos).
-4. Do **not** introduce a separate `roles` / `user_roles` join table unless you have spare time — current `role` column matches the scaffold and contracts.
-
-Commit when register/login feel solid.
-
----
+Already implemented: consistent errors, role allowlist, `GET /auth/me`. No `roles` / `user_roles` join table.
 
 ### Step 4 — Walk the Gateway code (30 min)
 
 1. `RouteConfig` — every `/api/<resource>/**` maps to the right `lb://service` with `stripPrefix(1)`.
-2. `JwtAuthFilter` — whitelist `/api/auth` and `/auth`; otherwise require `Authorization: Bearer …` and validate with the shared secret.
+2. `JwtAuthFilter` — whitelist `/api/auth` and `/auth` prefixes precisely; otherwise require `Authorization: Bearer …`.
 3. Confirm `application.yml` has `web-application-type: reactive`.
 
 **Acceptance:** You know why `/api/auth/register` becomes `/auth/register` on Identity.
 
----
-
-### Step 5 — Solo Gateway test with hardcoded URI (optional, if Eureka/lb fails) (30–45 min)
+### Step 5 — Solo Gateway test with hardcoded URI (optional debug)
 
 If `lb://identity-service` fails while Eureka isn’t ready:
 
 1. Temporarily change **only** the identity route to `http://localhost:8081` for local debugging.
-2. Test:
-   ```http
-   POST http://localhost:8080/api/auth/register
-   ```
-3. Revert to `lb://identity-service` before push / integration. Do not leave hardcoded URLs on the shared branch.
+2. Test `POST http://localhost:8080/api/auth/register`.
+3. Revert to `lb://identity-service` before push / integration.
 
----
-
-### Step 6 — Full Gateway + JWT path (1–1.5 h)
+### Step 6 — Full Gateway + JWT path
 
 Prerequisites: Eureka running; Identity registered at http://localhost:8761.
 
-1. Start `api-gateway`:
-   ```bash
-   cd api-gateway && mvn spring-boot:run
-   ```
-2. Register/login via gateway:
-   ```http
-   POST http://localhost:8080/api/auth/register
-   POST http://localhost:8080/api/auth/login
-   ```
-3. Copy `token` into Postman collection variable `token` (`postman/Uthao.postman_collection.json`).
-4. Prove filter works:
-   - Call any protected route (e.g. `GET http://localhost:8080/api/drivers/1`) **without** token → **401**.
-   - Same call **with** `Authorization: Bearer {{token}}` → not 401 from the filter (may be 404/503 if Driver isn’t up — that’s OK for your solo test).
+1. Start `api-gateway` (`mvn spring-boot:run`).
+2. Register/login via `http://localhost:8080/api/auth/...`.
+3. Set Postman collection variable `token` from login response.
+4. Protected route without token → **401**; with Bearer → not 401 from the filter (404/503 OK if downstream is down).
 
-**Acceptance:** Auth open; everything else blocked without a valid JWT.
+### Step 7 — Postman folder ownership (done in code)
 
----
-
-### Step 7 — Postman folder ownership (30 min)
-
-1. Import / update the **identity-service** requests in the shared collection.
-2. Ensure register + login do **not** send Bearer token.
-3. Document in a short PR note: “set collection `token` after login.”
-
----
+Identity requests updated: Register Rider, Register Driver, Login (no Bearer), Get Me (Bearer `{{token}}`). After login during testing, set collection `token`.
 
 ### Step 8 — Integration window (with team)
 
 1. Confirm JWT secret matches `Docs/CONTRACTS.md` exactly.
-2. After others’ services are up, run the shared smoke path starting with your register/login steps.
-3. If gateway returns `503`, check Eureka registration — don’t “fix” someone else’s service logic.
-4. Open PR from `feature/identity-gateway` → `main`. Merge one PR at a time with the team.
+2. Run shared smoke path starting with register/login.
+3. Gateway `503` → check Eureka registration; don’t “fix” other services’ logic.
+4. Open PR from `feature/identity-gateway` → `main` when ready.
 
 ---
 
@@ -220,33 +153,82 @@ Also OK: `postman/Uthao.postman_collection.json` (identity folder), docs if cont
 
 ## Done checklist
 
-- [ ] Branch created and pushed — **deferred** (staying on `pias`)
-- [ ] Identity register/login work on `:8081` — **deferred** (needs DB + run)
-- [ ] Passwords stored as BCrypt hashes — **deferred** (needs Postgres verify)
-- [x] Gateway routes `/api/auth/**` → Identity — scaffold + whitelist tightened in code
-- [x] JWT required on non-auth routes (401 without token) — filter in code; live smoke **deferred**
-- [ ] Token works through gateway for protected routes — **deferred** (needs Eureka + services)
-- [ ] Postman identity requests updated — **deferred**
-- [ ] PR opened into `main` — **deferred**
+### Code (done)
+
+- [x] Identity register/login/me endpoints implemented
+- [x] Passwords hashed with BCrypt in register path
+- [x] Role allowlist + consistent error JSON
+- [x] Gateway routes `/api/auth/**` → Identity (`lb://` + stripPrefix)
+- [x] JWT required on non-auth routes in `JwtAuthFilter`
+- [x] Postman identity requests updated (Register Rider/Driver, Login, Get Me)
+
+### Runtime / git (later — not started)
+
+- [ ] Branch `feature/identity-gateway` created and pushed
+- [ ] Identity register/login verified live on `:8081`
+- [ ] Passwords verified hashed in Postgres
+- [ ] Gateway JWT smoke verified live (401 without token; auth open)
+- [ ] Token works through gateway for a protected route
+- [ ] Postman exercised end-to-end; collection `token` set after login
+- [ ] PR opened into `main`
 
 ---
 
-## Deferred / skipped for now
+## Testing & debugging (later)
 
-Code-only pass: no Docker, Postgres, Eureka, Postman, IntelliJ run configs, or PR. Work stays on branch `pias`.
+Do this when Docker, Eureka, and Postman are available. **Do not block on it for code completeness.**
 
-| Deferred item | Why |
-|---------------|-----|
-| Step 0 — `docker compose`, Postgres `identity_db`, RabbitMQ UI | Needs Docker Desktop / DB |
-| Branch `feature/identity-gateway` create + push | Staying on `pias` for now |
-| Step 2 — `mvn spring-boot:run` + Postman register/login + DB hash check | Needs DB + Eureka + Postman |
-| Step 5 — hardcoded `http://localhost:8081` gateway debug | Needs running services |
-| Step 6 — full gateway JWT smoke (401 without token) | Needs Eureka + running gateway/identity |
-| Step 7 — Postman identity folder updates | Postman deferred |
-| Step 8 — team integration + PR → `main` | Needs team / remote workflow |
-| Runtime acceptance of Done checklist items that need live services | Same |
+### T1 — Infra
 
-**Done in this code-only pass (Step 3 + gateway polish):** role allowlist (`RIDER`/`DRIVER`), consistent error JSON via `GlobalExceptionHandler`, `GET /auth/me`, tighter gateway JWT whitelist paths. Compile verified with portable Maven (`mvn -DskipTests compile` on both services); system `mvn` was not on PATH. No live HTTP tests.
+1. `docker compose up -d`
+2. Confirm Postgres has `identity_db`
+3. Confirm RabbitMQ UI at http://localhost:15672
+
+### T2 — Identity direct (bypass gateway)
+
+1. Start Eureka (Person B) if possible.
+2. `cd identity-service && mvn spring-boot:run`
+3. `POST :8081/auth/register` (RIDER + DRIVER), `POST :8081/auth/login`, `GET :8081/auth/me` with Bearer.
+4. Postgres check: `users.password` is BCrypt, not plaintext.
+5. Negatives: duplicate email → 409; bad password → 401; blank email → 400; bad role → 400.
+
+### T3 — Gateway + JWT
+
+1. With Eureka up and Identity registered at http://localhost:8761, start `api-gateway`.
+2. `POST :8080/api/auth/register` and `/login`.
+3. `GET :8080/api/drivers/1` **without** token → **401**.
+4. Same with `Authorization: Bearer <token>` → not 401 from filter (404/503 OK if Driver down).
+5. `GET :8080/api/auth/me` with Bearer → user info.
+
+### T4 — Optional `lb://` debug
+
+If identity route fails via Eureka: temporarily point identity route at `http://localhost:8081`, retest, **revert to `lb://identity-service`** before sharing the branch.
+
+### T5 — Postman
+
+1. Import `postman/Uthao.postman_collection.json`.
+2. Run Register Rider / Login; copy `token` into collection variable `token`.
+3. Run Get Me and one protected non-auth request.
+4. Confirm Register/Login send **no** Bearer header.
+
+### T6 — Integration / PR
+
+1. Diff JWT secret against `Docs/CONTRACTS.md`.
+2. Team smoke: your register/login first, then others’ flows.
+3. On gateway `503`, check Eureka — don’t change other services’ business logic.
+4. Create/rename to `feature/identity-gateway`, push, open PR → `main`.
+
+### Debug cheat sheet
+
+| Symptom | Likely cause | What to check |
+|---------|--------------|---------------|
+| Identity won’t start | Postgres / `identity_db` missing | Docker compose, JDBC URL |
+| Register 409 always | Email already exists | Use a new email or truncate `users` |
+| Login 401 | Wrong password or email case | Email is normalized lowercase in code |
+| Gateway 401 on `/api/auth/*` | Filter whitelist broken | Path must be `/api/auth/...` |
+| Gateway 503 | Service not in Eureka | Eureka UI; service name matches `lb://` |
+| Token invalid on gateway | Secret mismatch | Same `jwt.secret` in identity + gateway |
+| `/auth/me` 401 | Missing/invalid Bearer | Header `Authorization: Bearer <token>` |
 
 ---
 

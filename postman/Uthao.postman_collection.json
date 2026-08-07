@@ -1,39 +1,85 @@
 {
   "info": {
     "name": "Uthao",
-    "description": "Uthao ride-sharing API (via API Gateway)",
+    "description": "Uthao ride-sharing API (via API Gateway). Set collection variable token after Login.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:8080" },
-    { "key": "token", "value": "" }
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
   ],
   "item": [
     {
       "name": "identity-service",
       "item": [
         {
-          "name": "Register",
+          "name": "Register Rider",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/register",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \\"name\\": \\"Alice Rider\\",\n  \\"email\\": \\"alice@example.com\\",\n  \\"password\\": \\"password123\\",\n  \\"role\\": \\"RIDER\\"\n}"
-            },
-            "url": "{{baseUrl}}/api/auth/register"
+              "raw": "{\n  \"name\": \"Alice Rider\",\n  \"email\": \"alice@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"RIDER\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Register Driver",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Karim Driver\",\n  \"email\": \"karim@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"DRIVER\"\n}"
+            }
           }
         },
         {
           "name": "Login",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \\"email\\": \\"alice@example.com\\",\n  \\"password\\": \\"password123\\"\n}"
-            },
-            "url": "{{baseUrl}}/api/auth/login"
+              "raw": "{\n  \"email\": \"alice@example.com\",\n  \"password\": \"password123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me"
           }
         }
       ]
@@ -46,21 +92,32 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
             ],
+            "url": "{{baseUrl}}/api/riders/requests",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \\"riderId\\": 1,\n  \\"pickupLat\\": 23.8103,\n  \\"pickupLng\\": 90.4125,\n  \\"dropLat\\": 23.7808,\n  \\"dropLng\\": 90.4074\n}"
-            },
-            "url": "{{baseUrl}}/api/riders/requests"
+              "raw": "{\n  \"riderId\": 1,\n  \"pickupLat\": 23.8103,\n  \"pickupLng\": 90.4125,\n  \"dropLat\": 23.7808,\n  \"dropLng\": 90.4074\n}"
+            }
           }
         },
         {
           "name": "Get Rider Requests",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/riders/1/requests"
           }
         },
@@ -68,7 +125,12 @@
           "name": "Cancel Ride Request",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/riders/requests/1/cancel"
           }
         }
@@ -82,14 +144,20 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
             ],
+            "url": "{{baseUrl}}/api/drivers",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \\"userId\\": 2,\n  \\"name\\": \\"Karim Driver\\",\n  \\"email\\": \\"karim@example.com\\",\n  \\"phone\\": \\"01700000000\\",\n  \\"licenseNumber\\": \\"LIC-001\\"\n}"
-            },
-            "url": "{{baseUrl}}/api/drivers"
+              "raw": "{\n  \"userId\": 2,\n  \"name\": \"Karim Driver\",\n  \"email\": \"karim@example.com\",\n  \"phone\": \"01700000000\",\n  \"licenseNumber\": \"LIC-001\"\n}"
+            }
           }
         },
         {
@@ -97,14 +165,20 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
             ],
+            "url": "{{baseUrl}}/api/drivers/1/vehicles",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \\"make\\": \\"Toyota\\",\n  \\"model\\": \\"Corolla\\",\n  \\"plateNumber\\": \\"DHA-1234\\",\n  \\"color\\": \\"White\\"\n}"
-            },
-            "url": "{{baseUrl}}/api/drivers/1/vehicles"
+              "raw": "{\n  \"make\": \"Toyota\",\n  \"model\": \"Corolla\",\n  \"plateNumber\": \"DHA-1234\",\n  \"color\": \"White\"\n}"
+            }
           }
         },
         {
@@ -112,21 +186,32 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
             ],
+            "url": "{{baseUrl}}/api/drivers/1/status",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \\"status\\": \\"AVAILABLE\\",\n  \\"currentLat\\": 23.8110,\n  \\"currentLng\\": 90.4130\n}"
-            },
-            "url": "{{baseUrl}}/api/drivers/1/status"
+              "raw": "{\n  \"status\": \"AVAILABLE\",\n  \"currentLat\": 23.811,\n  \"currentLng\": 90.413\n}"
+            }
           }
         },
         {
           "name": "Get Available Drivers",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/drivers/available?lat=23.8103&lng=90.4125&radiusKm=5"
           }
         },
@@ -134,7 +219,12 @@
           "name": "Get Driver",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/drivers/1"
           }
         }
@@ -148,14 +238,20 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
             ],
+            "url": "{{baseUrl}}/api/matching/find-driver",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \\"rideRequestId\\": 1,\n  \\"riderId\\": 1,\n  \\"pickupLat\\": 23.8103,\n  \\"pickupLng\\": 90.4125,\n  \\"dropLat\\": 23.7808,\n  \\"dropLng\\": 90.4074\n}"
-            },
-            "url": "{{baseUrl}}/api/matching/find-driver"
+              "raw": "{\n  \"rideRequestId\": 1,\n  \"riderId\": 1,\n  \"pickupLat\": 23.8103,\n  \"pickupLng\": 90.4125,\n  \"dropLat\": 23.7808,\n  \"dropLng\": 90.4074\n}"
+            }
           }
         }
       ]
@@ -167,7 +263,12 @@
           "name": "Get Trip",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/trips/1"
           }
         },
@@ -175,7 +276,12 @@
           "name": "Start Trip",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/trips/1/start"
           }
         },
@@ -183,7 +289,12 @@
           "name": "Complete Trip",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/trips/1/complete"
           }
         },
@@ -191,7 +302,12 @@
           "name": "Cancel Trip",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/trips/1/cancel"
           }
         }
@@ -204,7 +320,12 @@
           "name": "Get Payment by Trip",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/payments/trip/1"
           }
         },
@@ -213,14 +334,20 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
             ],
+            "url": "{{baseUrl}}/api/payments/1/refund",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \\"reason\\": \\"Trip cancelled after payment\\"\n}"
-            },
-            "url": "{{baseUrl}}/api/payments/1/refund"
+              "raw": "{\n  \"reason\": \"Trip cancelled after payment\"\n}"
+            }
           }
         }
       ]
@@ -232,7 +359,12 @@
           "name": "Get User Notifications",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/notifications/user/1"
           }
         },
@@ -240,7 +372,12 @@
           "name": "Mark Notification Read",
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/notifications/1/read"
           }
         }
