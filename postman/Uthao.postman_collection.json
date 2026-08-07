@@ -1,0 +1,250 @@
+{
+  "info": {
+    "name": "Uthao",
+    "description": "Uthao ride-sharing API (via API Gateway)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "identity-service",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \\"name\\": \\"Alice Rider\\",\n  \\"email\\": \\"alice@example.com\\",\n  \\"password\\": \\"password123\\",\n  \\"role\\": \\"RIDER\\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/register"
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \\"email\\": \\"alice@example.com\\",\n  \\"password\\": \\"password123\\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        }
+      ]
+    },
+    {
+      "name": "rider-service",
+      "item": [
+        {
+          "name": "Create Ride Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \\"riderId\\": 1,\n  \\"pickupLat\\": 23.8103,\n  \\"pickupLng\\": 90.4125,\n  \\"dropLat\\": 23.7808,\n  \\"dropLng\\": 90.4074\n}"
+            },
+            "url": "{{baseUrl}}/api/riders/requests"
+          }
+        },
+        {
+          "name": "Get Rider Requests",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/riders/1/requests"
+          }
+        },
+        {
+          "name": "Cancel Ride Request",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/riders/requests/1/cancel"
+          }
+        }
+      ]
+    },
+    {
+      "name": "driver-service",
+      "item": [
+        {
+          "name": "Register Driver",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \\"userId\\": 2,\n  \\"name\\": \\"Karim Driver\\",\n  \\"email\\": \\"karim@example.com\\",\n  \\"phone\\": \\"01700000000\\",\n  \\"licenseNumber\\": \\"LIC-001\\"\n}"
+            },
+            "url": "{{baseUrl}}/api/drivers"
+          }
+        },
+        {
+          "name": "Add Vehicle",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \\"make\\": \\"Toyota\\",\n  \\"model\\": \\"Corolla\\",\n  \\"plateNumber\\": \\"DHA-1234\\",\n  \\"color\\": \\"White\\"\n}"
+            },
+            "url": "{{baseUrl}}/api/drivers/1/vehicles"
+          }
+        },
+        {
+          "name": "Update Driver Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \\"status\\": \\"AVAILABLE\\",\n  \\"currentLat\\": 23.8110,\n  \\"currentLng\\": 90.4130\n}"
+            },
+            "url": "{{baseUrl}}/api/drivers/1/status"
+          }
+        },
+        {
+          "name": "Get Available Drivers",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/drivers/available?lat=23.8103&lng=90.4125&radiusKm=5"
+          }
+        },
+        {
+          "name": "Get Driver",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/drivers/1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "matching-service",
+      "item": [
+        {
+          "name": "Find Driver",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \\"rideRequestId\\": 1,\n  \\"riderId\\": 1,\n  \\"pickupLat\\": 23.8103,\n  \\"pickupLng\\": 90.4125,\n  \\"dropLat\\": 23.7808,\n  \\"dropLng\\": 90.4074\n}"
+            },
+            "url": "{{baseUrl}}/api/matching/find-driver"
+          }
+        }
+      ]
+    },
+    {
+      "name": "trip-service",
+      "item": [
+        {
+          "name": "Get Trip",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/trips/1"
+          }
+        },
+        {
+          "name": "Start Trip",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/trips/1/start"
+          }
+        },
+        {
+          "name": "Complete Trip",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/trips/1/complete"
+          }
+        },
+        {
+          "name": "Cancel Trip",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/trips/1/cancel"
+          }
+        }
+      ]
+    },
+    {
+      "name": "payment-service",
+      "item": [
+        {
+          "name": "Get Payment by Trip",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/payments/trip/1"
+          }
+        },
+        {
+          "name": "Request Refund",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \\"reason\\": \\"Trip cancelled after payment\\"\n}"
+            },
+            "url": "{{baseUrl}}/api/payments/1/refund"
+          }
+        }
+      ]
+    },
+    {
+      "name": "notification-service",
+      "item": [
+        {
+          "name": "Get User Notifications",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/notifications/user/1"
+          }
+        },
+        {
+          "name": "Mark Notification Read",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/notifications/1/read"
+          }
+        }
+      ]
+    }
+  ]
+}
