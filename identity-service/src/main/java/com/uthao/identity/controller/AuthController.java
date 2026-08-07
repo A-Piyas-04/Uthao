@@ -2,10 +2,12 @@ package com.uthao.identity.controller;
 
 import com.uthao.identity.dto.AuthResponse;
 import com.uthao.identity.dto.LoginRequest;
+import com.uthao.identity.dto.MeResponse;
 import com.uthao.identity.dto.RegisterRequest;
 import com.uthao.identity.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,5 +27,10 @@ public class AuthController {
     @PostMapping("/login")
     public AuthResponse login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);
+    }
+
+    @GetMapping("/me")
+    public MeResponse me(@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization) {
+        return authService.me(authorization);
     }
 }

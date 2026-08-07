@@ -24,6 +24,7 @@ You are **not** starting from Spring Initializr. The scaffold already includes c
 | JWT util (claims `userId`, `role`, no expiry) | `security/JwtUtil.java` | Done |
 | Security (stateless, permit `/auth/**`) | `security/SecurityConfig.java` | Done |
 | Register / login | `AuthService` + `AuthController` | Done |
+| Role allowlist + error JSON + `GET /auth/me` | `AuthService`, `GlobalExceptionHandler`, `MeResponse` | Done (code-only) |
 | Config | port 8081, `identity_db`, JWT secret | Done |
 
 ### `api-gateway`
@@ -219,14 +220,33 @@ Also OK: `postman/Uthao.postman_collection.json` (identity folder), docs if cont
 
 ## Done checklist
 
-- [ ] Branch created and pushed
-- [ ] Identity register/login work on `:8081`
-- [ ] Passwords stored as BCrypt hashes
-- [ ] Gateway routes `/api/auth/**` → Identity
-- [ ] JWT required on non-auth routes (401 without token)
-- [ ] Token works through gateway for protected routes
-- [ ] Postman identity requests updated
-- [ ] PR opened into `main`
+- [ ] Branch created and pushed — **deferred** (staying on `pias`)
+- [ ] Identity register/login work on `:8081` — **deferred** (needs DB + run)
+- [ ] Passwords stored as BCrypt hashes — **deferred** (needs Postgres verify)
+- [x] Gateway routes `/api/auth/**` → Identity — scaffold + whitelist tightened in code
+- [x] JWT required on non-auth routes (401 without token) — filter in code; live smoke **deferred**
+- [ ] Token works through gateway for protected routes — **deferred** (needs Eureka + services)
+- [ ] Postman identity requests updated — **deferred**
+- [ ] PR opened into `main` — **deferred**
+
+---
+
+## Deferred / skipped for now
+
+Code-only pass: no Docker, Postgres, Eureka, Postman, IntelliJ run configs, or PR. Work stays on branch `pias`.
+
+| Deferred item | Why |
+|---------------|-----|
+| Step 0 — `docker compose`, Postgres `identity_db`, RabbitMQ UI | Needs Docker Desktop / DB |
+| Branch `feature/identity-gateway` create + push | Staying on `pias` for now |
+| Step 2 — `mvn spring-boot:run` + Postman register/login + DB hash check | Needs DB + Eureka + Postman |
+| Step 5 — hardcoded `http://localhost:8081` gateway debug | Needs running services |
+| Step 6 — full gateway JWT smoke (401 without token) | Needs Eureka + running gateway/identity |
+| Step 7 — Postman identity folder updates | Postman deferred |
+| Step 8 — team integration + PR → `main` | Needs team / remote workflow |
+| Runtime acceptance of Done checklist items that need live services | Same |
+
+**Done in this code-only pass (Step 3 + gateway polish):** role allowlist (`RIDER`/`DRIVER`), consistent error JSON via `GlobalExceptionHandler`, `GET /auth/me`, tighter gateway JWT whitelist paths. Compile verified with portable Maven (`mvn -DskipTests compile` on both services); system `mvn` was not on PATH. No live HTTP tests.
 
 ---
 
