@@ -91,7 +91,7 @@ Check:
 
 | Thing | URL / check |
 |-------|-------------|
-| Postgres | `localhost:5432` — user `postgres` / `postgres` |
+| Postgres | `localhost:5433` — user `postgres` / `postgres` |
 | RabbitMQ UI | http://localhost:15672 — `guest` / `guest` |
 
 Databases (`identity_db`, `rider_db`, …) are created automatically via `init-db.sql` on first Postgres start.

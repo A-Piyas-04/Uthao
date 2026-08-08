@@ -1,0 +1,3 @@
+export const ROLES = { RIDER: "RIDER", DRIVER: "DRIVER" };
+
+export const DRIVER_STATUS = { AVAILABLE: "AVAILABLE", OFFLINE: "OFFLINE" };

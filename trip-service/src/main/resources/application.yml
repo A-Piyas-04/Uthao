@@ -4,7 +4,7 @@ spring:
   application:
     name: trip-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/trip_db
+    url: jdbc:postgresql://localhost:5433/trip_db
     username: postgres
     password: postgres
   jpa:

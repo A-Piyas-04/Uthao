@@ -4,7 +4,7 @@ spring:
   application:
     name: matching-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/matching_db
+    url: jdbc:postgresql://localhost:5433/matching_db
     username: postgres
     password: postgres
   jpa:
