@@ -3,6 +3,7 @@ package com.uthao.driver.controller;
 import com.uthao.driver.dto.*;
 import com.uthao.driver.model.Driver;
 import com.uthao.driver.model.DriverStatus;
+import com.uthao.driver.model.DriverTrip;
 import com.uthao.driver.model.Vehicle;
 import com.uthao.driver.service.DriverService;
 import jakarta.validation.Valid;
@@ -48,5 +49,10 @@ public class DriverController {
     @GetMapping("/{driverId}")
     public Driver getDriver(@PathVariable Long driverId) {
         return driverService.getDriver(driverId);
+    }
+
+    @GetMapping("/{driverId}/trips")
+    public List<DriverTrip> getDriverTrips(@PathVariable Long driverId) {
+        return driverService.getDriverTrips(driverId);
     }
 }
