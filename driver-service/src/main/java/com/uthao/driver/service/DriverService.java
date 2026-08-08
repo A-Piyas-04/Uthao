@@ -3,9 +3,11 @@ package com.uthao.driver.service;
 import com.uthao.driver.dto.*;
 import com.uthao.driver.model.Driver;
 import com.uthao.driver.model.DriverStatus;
+import com.uthao.driver.model.DriverTrip;
 import com.uthao.driver.model.Vehicle;
 import com.uthao.driver.repository.DriverRepository;
 import com.uthao.driver.repository.DriverStatusRepository;
+import com.uthao.driver.repository.DriverTripRepository;
 import com.uthao.driver.repository.VehicleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -14,6 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,6 +26,7 @@ public class DriverService {
     private final DriverRepository driverRepository;
     private final VehicleRepository vehicleRepository;
     private final DriverStatusRepository driverStatusRepository;
+    private final DriverTripRepository driverTripRepository;
 
     public Driver registerDriver(DriverRegisterRequest request) {
         Driver driver = Driver.builder()
@@ -94,5 +98,30 @@ public class DriverService {
                             .build();
                 })
                 .collect(Collectors.toList());
+    }
+
+    public void recordTripAssignment(Map<String, Object> event) {
+        DriverTrip trip = DriverTrip.builder()
+                .driverId(toLong(event.get("driverId")))
+                .rideRequestId(toLong(event.get("rideRequestId")))
+                .riderId(toLong(event.get("riderId")))
+                .eta(event.get("eta") != null ? event.get("eta").toString() : null)
+                .build();
+        driverTripRepository.save(trip);
+    }
+
+    public List<DriverTrip> getDriverTrips(Long driverId) {
+        getDriver(driverId);
+        return driverTripRepository.findByDriverIdOrderByAssignedAtDesc(driverId);
+    }
+
+    private Long toLong(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        return Long.parseLong(value.toString());
     }
 }
