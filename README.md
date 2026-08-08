@@ -177,7 +177,7 @@ identity | rider | driver | matching | trip | payment | notification
 - [ ] Run Postgres + Eureka + `identity-service` + `api-gateway`
 - [ ] Register / login via gateway; confirm JWT in response
 - [ ] Call a protected route **without** token → expect `401`
-- [ ] Confirm JWT secret matches contracts (`uthao-super-secret-jwt-key-2024`)
+- [ ] Confirm JWT secret matches contracts (`uthao-super-secret-jwt-key-2024-extended-256bit`)
 - [ ] Touch: `AuthController`, `AuthService`, `JwtUtil`, `JwtAuthFilter`, `RouteConfig`
 
 ### Person B — Rider + Eureka
@@ -214,7 +214,7 @@ identity | rider | driver | matching | trip | payment | notification
 | Java / Boot | Java 21, Spring Boot **3.2.5** |
 | Build | Maven per service (`pom.xml` in each folder) |
 | Auth header | `Authorization: Bearer <token>` |
-| JWT secret | `uthao-super-secret-jwt-key-2024` (no expiry in this phase) |
+| JWT secret | `uthao-super-secret-jwt-key-2024-extended-256bit` (no expiry in this phase) |
 | Exchange | `uthao.events` (topic) |
 | DB DDL | `spring.jpa.hibernate.ddl-auto=update` |
 | Out of scope | WebSocket, live tracking, rating service, frontend |

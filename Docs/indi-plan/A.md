@@ -44,9 +44,9 @@ Person A **coding ownership is done**. Do not treat missing Docker/Eureka/Postma
 | Piece | Location | Status |
 |-------|----------|--------|
 | Postman identity folder | `postman/Uthao.postman_collection.json` | Done (Register Rider, Register Driver, Login, Get Me) |
-| Shared JWT secret | `uthao-super-secret-jwt-key-2024` | Must match `CONTRACTS.md` |
+| Shared JWT secret | `uthao-super-secret-jwt-key-2024-extended-256bit` | Must match `CONTRACTS.md` |
 
-**Shared secret (must not change alone):** `uthao-super-secret-jwt-key-2024`
+**Shared secret (must not change alone):** `uthao-super-secret-jwt-key-2024-extended-256bit`
 
 ---
 

@@ -130,7 +130,7 @@ No controller, no entity, no DB. That is all this service needs.
 **`filter/JwtAuthFilter.java`** — A `GlobalFilter` that:
 - Skips `/auth/**` routes (whitelist — no token needed for register/login)
 - For all other routes, reads the `Authorization: Bearer <token>` header
-- Validates the token using the shared secret (`uthao-super-secret-jwt-key-2024`)
+- Validates the token using the shared secret (`uthao-super-secret-jwt-key-2024-extended-256bit`)
 - If missing or invalid, returns HTTP 401
 - If valid, passes the request through
 
@@ -157,7 +157,7 @@ eureka:
     service-url:
       defaultZone: http://localhost:8761/eureka
 jwt:
-  secret: uthao-super-secret-jwt-key-2024
+  secret: uthao-super-secret-jwt-key-2024-extended-256bit
 ```
 
 ---
@@ -190,7 +190,7 @@ createdAt (LocalDateTime, auto)
 - `login(LoginRequest)`: find by email, verify BCrypt, generate JWT, return `AuthResponse`
 
 **`security/JwtUtil.java`:**
-- `generateToken(User user)`: creates a JWT with claims `userId` and `role`, signed with secret `uthao-super-secret-jwt-key-2024`, no expiry (skip expiry to keep it simple)
+- `generateToken(User user)`: creates a JWT with claims `userId` and `role`, signed with secret `uthao-super-secret-jwt-key-2024-extended-256bit`, no expiry (skip expiry to keep it simple)
 - `validateToken(String token)`: returns true/false
 - `getClaims(String token)`: returns `Claims`
 
@@ -218,7 +218,7 @@ eureka:
     service-url:
       defaultZone: http://localhost:8761/eureka
 jwt:
-  secret: uthao-super-secret-jwt-key-2024
+  secret: uthao-super-secret-jwt-key-2024-extended-256bit
 ```
 
 Disable Spring Security's default form login — configure it to be stateless (no session), permit `/auth/**`, and require authentication on everything else.
@@ -524,7 +524,7 @@ Create this file at the root of the project. It must cover every item the team n
 (table of all ports)
 
 ## 2. Shared JWT Secret
-Secret string: `uthao-super-secret-jwt-key-2024`
+Secret string: `uthao-super-secret-jwt-key-2024-extended-256bit`
 Token claims: `userId` (Long), `role` (String: "RIDER" or "DRIVER")
 Header format: `Authorization: Bearer <token>`
 No expiry in this version.

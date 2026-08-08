@@ -22,7 +22,7 @@
 
 ## 2. Shared JWT Secret
 
-Secret string: `uthao-super-secret-jwt-key-2024`
+Secret string: `uthao-super-secret-jwt-key-2024-extended-256bit`
 
 Token claims: `userId` (Long), `role` (String: "RIDER" or "DRIVER")
 
