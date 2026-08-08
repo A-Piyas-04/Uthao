@@ -18,4 +18,4 @@ eureka:
     service-url:
       defaultZone: http://localhost:8761/eureka
 jwt:
-  secret: uthao-super-secret-jwt-key-2024
+  secret: uthao-super-secret-jwt-key-2024-extended-256bit
