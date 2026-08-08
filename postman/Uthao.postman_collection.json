@@ -1,83 +1,120 @@
 {
   "info": {
     "name": "Uthao",
-    "description": "Uthao ride-sharing API (via API Gateway). Set collection variable token after Login.",
+    "description": "Uthao ride-sharing API (via API Gateway, http://localhost:8080). Requests are ordered top-to-bottom as one end-to-end sequence — run the whole collection with Postman's Collection Runner against a fresh docker-compose Postgres/RabbitMQ (or just click each request in order). Tokens and IDs (riderToken, driverToken, riderId, driverUserId, driverId, rideRequestId, tripId, paymentId) are captured automatically by test scripts into collection variables, so no request bodies need editing between runs. One manual step: 'Get Trip By Ride Request' polls an async result (driver.assigned -> trip-service listener) — if it 404s, just click Send again a couple of times a second or two apart. Includes negative tests proving the DRIVER-only start/complete restriction and the cancel-only-before-start rule added to trip-service.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    {
-      "key": "baseUrl",
-      "value": "http://localhost:8080"
-    },
-    {
-      "key": "token",
-      "value": ""
-    }
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "riderEmail", "value": "" },
+    { "key": "driverEmail", "value": "" },
+    { "key": "riderToken", "value": "" },
+    { "key": "driverToken", "value": "" },
+    { "key": "riderId", "value": "" },
+    { "key": "driverUserId", "value": "" },
+    { "key": "driverId", "value": "" },
+    { "key": "rideRequestId", "value": "" },
+    { "key": "tripId", "value": "" },
+    { "key": "paymentId", "value": "" }
   ],
   "item": [
     {
-      "name": "identity-service",
+      "name": "01 - Identity",
       "item": [
         {
           "name": "Register Rider",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('riderEmail', 'alice+' + Date.now() + '@example.com');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+                  "var data = pm.response.json();",
+                  "pm.collectionVariables.set('riderToken', data.token);",
+                  "pm.collectionVariables.set('riderId', data.userId);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+              { "key": "Content-Type", "value": "application/json" }
             ],
             "url": "{{baseUrl}}/api/auth/register",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Alice Rider\",\n  \"email\": \"alice@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"RIDER\"\n}"
+              "raw": "{\n  \"name\": \"Alice Rider\",\n  \"email\": \"{{riderEmail}}\",\n  \"password\": \"password123\",\n  \"role\": \"RIDER\"\n}"
             }
           }
         },
         {
           "name": "Register Driver",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('driverEmail', 'karim+' + Date.now() + '@example.com');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+                  "var data = pm.response.json();",
+                  "pm.collectionVariables.set('driverToken', data.token);",
+                  "pm.collectionVariables.set('driverUserId', data.userId);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+              { "key": "Content-Type", "value": "application/json" }
             ],
             "url": "{{baseUrl}}/api/auth/register",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Karim Driver\",\n  \"email\": \"karim@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"DRIVER\"\n}"
+              "raw": "{\n  \"name\": \"Karim Driver\",\n  \"email\": \"{{driverEmail}}\",\n  \"password\": \"password123\",\n  \"role\": \"DRIVER\"\n}"
             }
           }
         },
         {
-          "name": "Login",
+          "name": "Login (reference — Register already returns a token)",
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+              { "key": "Content-Type", "value": "application/json" }
             ],
             "url": "{{baseUrl}}/api/auth/login",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"alice@example.com\",\n  \"password\": \"password123\"\n}"
+              "raw": "{\n  \"email\": \"{{riderEmail}}\",\n  \"password\": \"password123\"\n}"
             }
           }
         },
         {
-          "name": "Get Me",
+          "name": "Get Me (rider)",
           "request": {
             "method": "GET",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
+              { "key": "Authorization", "value": "Bearer {{riderToken}}" }
             ],
             "url": "{{baseUrl}}/api/auth/me"
           }
@@ -85,78 +122,33 @@
       ]
     },
     {
-      "name": "rider-service",
+      "name": "02 - Driver Onboarding",
       "item": [
         {
-          "name": "Create Ride Request",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
+          "name": "Register Driver Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+                  "var data = pm.response.json();",
+                  "pm.collectionVariables.set('driverId', data.id);"
+                ]
               }
-            ],
-            "url": "{{baseUrl}}/api/riders/requests",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"riderId\": 1,\n  \"pickupLat\": 23.8103,\n  \"pickupLng\": 90.4125,\n  \"dropLat\": 23.7808,\n  \"dropLng\": 90.4074\n}"
             }
-          }
-        },
-        {
-          "name": "Get Rider Requests",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": "{{baseUrl}}/api/riders/1/requests"
-          }
-        },
-        {
-          "name": "Cancel Ride Request",
+          ],
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": "{{baseUrl}}/api/riders/requests/1/cancel"
-          }
-        }
-      ]
-    },
-    {
-      "name": "driver-service",
-      "item": [
-        {
-          "name": "Register Driver",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{driverToken}}" }
             ],
             "url": "{{baseUrl}}/api/drivers",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"userId\": 2,\n  \"name\": \"Karim Driver\",\n  \"email\": \"karim@example.com\",\n  \"phone\": \"01700000000\",\n  \"licenseNumber\": \"LIC-001\"\n}"
+              "raw": "{\n  \"userId\": {{driverUserId}},\n  \"name\": \"Karim Driver\",\n  \"email\": \"{{driverEmail}}\",\n  \"phone\": \"01700000000\",\n  \"licenseNumber\": \"LIC-001\"\n}"
             }
           }
         },
@@ -165,16 +157,10 @@
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{driverToken}}" }
             ],
-            "url": "{{baseUrl}}/api/drivers/1/vehicles",
+            "url": "{{baseUrl}}/api/drivers/{{driverId}}/vehicles",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"make\": \"Toyota\",\n  \"model\": \"Corolla\",\n  \"plateNumber\": \"DHA-1234\",\n  \"color\": \"White\"\n}"
@@ -182,37 +168,28 @@
           }
         },
         {
-          "name": "Update Driver Status",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
+          "name": "Get Driver By User (NEW — resolves driverId from identity userId)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK, id matches captured driverId', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  var data = pm.response.json();",
+                  "  pm.expect(String(data.id)).to.eql(String(pm.collectionVariables.get('driverId')));",
+                  "});"
+                ]
               }
-            ],
-            "url": "{{baseUrl}}/api/drivers/1/status",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"status\": \"AVAILABLE\",\n  \"currentLat\": 23.811,\n  \"currentLng\": 90.413\n}"
             }
-          }
-        },
-        {
-          "name": "Get Available Drivers",
+          ],
           "request": {
             "method": "GET",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
+              { "key": "Authorization", "value": "Bearer {{driverToken}}" }
             ],
-            "url": "{{baseUrl}}/api/drivers/available?lat=23.8103&lng=90.4125&radiusKm=5"
+            "url": "{{baseUrl}}/api/drivers/by-user/{{driverUserId}}"
           }
         },
         {
@@ -220,113 +197,327 @@
           "request": {
             "method": "GET",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
+              { "key": "Authorization", "value": "Bearer {{driverToken}}" }
             ],
-            "url": "{{baseUrl}}/api/drivers/1"
+            "url": "{{baseUrl}}/api/drivers/{{driverId}}"
           }
         }
       ]
     },
     {
-      "name": "matching-service",
+      "name": "03 - Driver Goes Available",
       "item": [
         {
-          "name": "Find Driver",
+          "name": "Update Driver Status -> AVAILABLE",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{driverToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/drivers/{{driverId}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"AVAILABLE\",\n  \"currentLat\": 23.811,\n  \"currentLng\": 90.413\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Driver Status (NEW — read back what was just set)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is AVAILABLE', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('AVAILABLE');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{driverToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/drivers/{{driverId}}/status"
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Rider Requests a Ride",
+      "item": [
+        {
+          "name": "Get Available Drivers Nearby",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{riderToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/drivers/available?lat=23.8103&lng=90.4125&radiusKm=5"
+          }
+        },
+        {
+          "name": "Create Ride Request",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', function () { pm.response.to.have.status(201); });",
+                  "var data = pm.response.json();",
+                  "pm.collectionVariables.set('rideRequestId', data.id);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{riderToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/riders/requests",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"riderId\": {{riderId}},\n  \"pickupLat\": 23.8103,\n  \"pickupLng\": 90.4125,\n  \"dropLat\": 23.7808,\n  \"dropLng\": 90.4074\n}"
+            }
+          }
+        },
+        {
+          "name": "Get Rider Requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{riderToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/riders/{{riderId}}/requests"
+          }
+        },
+        {
+          "name": "Find Driver (triggers async driver.assigned event)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is MATCHED (need an AVAILABLE driver from step 03)', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('MATCHED');",
+                  "});"
+                ]
               }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{riderToken}}" }
             ],
             "url": "{{baseUrl}}/api/matching/find-driver",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"rideRequestId\": 1,\n  \"riderId\": 1,\n  \"pickupLat\": 23.8103,\n  \"pickupLng\": 90.4125,\n  \"dropLat\": 23.7808,\n  \"dropLng\": 90.4074\n}"
+              "raw": "{\n  \"rideRequestId\": {{rideRequestId}},\n  \"riderId\": {{riderId}},\n  \"pickupLat\": 23.8103,\n  \"pickupLng\": 90.4125,\n  \"dropLat\": 23.7808,\n  \"dropLng\": 90.4074\n}"
             }
           }
         }
       ]
     },
     {
-      "name": "trip-service",
+      "name": "05 - Trip Lifecycle",
       "item": [
+        {
+          "name": "Get Trip By Ride Request (NEW — poll until 200, may need a re-send)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  pm.collectionVariables.set('tripId', pm.response.json().id);",
+                  "  pm.test('trip found, tripId captured', function () { pm.response.to.have.status(200); });",
+                  "} else {",
+                  "  pm.test('trip not created yet — driver.assigned listener still async, re-send this request', function () {",
+                  "    pm.expect(pm.response.code).to.eql(404);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{riderToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/trips/by-request/{{rideRequestId}}"
+          }
+        },
         {
           "name": "Get Trip",
           "request": {
             "method": "GET",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
+              { "key": "Authorization", "value": "Bearer {{riderToken}}" }
             ],
-            "url": "{{baseUrl}}/api/trips/1"
+            "url": "{{baseUrl}}/api/trips/{{tripId}}"
           }
         },
         {
-          "name": "Start Trip",
+          "name": "[NEGATIVE] Rider tries Start Trip -> expect 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 Forbidden — only DRIVER can start a trip', function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
+              { "key": "Authorization", "value": "Bearer {{riderToken}}" }
             ],
-            "url": "{{baseUrl}}/api/trips/1/start"
+            "url": "{{baseUrl}}/api/trips/{{tripId}}/start"
           }
         },
         {
-          "name": "Complete Trip",
+          "name": "Start Trip (as Driver)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is ONGOING', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('ONGOING');",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
+              { "key": "Authorization", "value": "Bearer {{driverToken}}" }
             ],
-            "url": "{{baseUrl}}/api/trips/1/complete"
+            "url": "{{baseUrl}}/api/trips/{{tripId}}/start"
           }
         },
         {
-          "name": "Cancel Trip",
+          "name": "[NEGATIVE] Rider tries Cancel Trip now -> expect 409 (already started)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409 Conflict — can only cancel before a trip starts', function () {",
+                  "  pm.response.to.have.status(409);",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
+              { "key": "Authorization", "value": "Bearer {{riderToken}}" }
             ],
-            "url": "{{baseUrl}}/api/trips/1/cancel"
+            "url": "{{baseUrl}}/api/trips/{{tripId}}/cancel"
+          }
+        },
+        {
+          "name": "[NEGATIVE] Rider tries Complete Trip -> expect 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 Forbidden — only DRIVER can complete a trip', function () {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{riderToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/trips/{{tripId}}/complete"
+          }
+        },
+        {
+          "name": "Complete Trip (as Driver, triggers async payment.completed)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is COMPLETED', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().status).to.eql('COMPLETED');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{driverToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/trips/{{tripId}}/complete"
           }
         }
       ]
     },
     {
-      "name": "payment-service",
+      "name": "06 - Payment",
       "item": [
         {
           "name": "Get Payment by Trip",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  pm.collectionVariables.set('paymentId', pm.response.json().id);",
+                  "} else {",
+                  "  pm.test('payment not created yet — trip.completed listener still async, re-send this request', function () {",
+                  "    pm.expect(pm.response.code).to.eql(404);",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
+              { "key": "Authorization", "value": "Bearer {{riderToken}}" }
             ],
-            "url": "{{baseUrl}}/api/payments/trip/1"
+            "url": "{{baseUrl}}/api/payments/trip/{{tripId}}"
           }
         },
         {
@@ -334,16 +525,10 @@
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{riderToken}}" }
             ],
-            "url": "{{baseUrl}}/api/payments/1/refund",
+            "url": "{{baseUrl}}/api/payments/{{paymentId}}/refund",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"reason\": \"Trip cancelled after payment\"\n}"
@@ -353,30 +538,24 @@
       ]
     },
     {
-      "name": "notification-service",
+      "name": "07 - Notifications",
       "item": [
         {
-          "name": "Get User Notifications",
+          "name": "Get Rider Notifications",
           "request": {
             "method": "GET",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
+              { "key": "Authorization", "value": "Bearer {{riderToken}}" }
             ],
-            "url": "{{baseUrl}}/api/notifications/user/1"
+            "url": "{{baseUrl}}/api/notifications/user/{{riderId}}"
           }
         },
         {
-          "name": "Mark Notification Read",
+          "name": "Mark Notification Read (edit the id in the URL from the response above)",
           "request": {
             "method": "PATCH",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
+              { "key": "Authorization", "value": "Bearer {{riderToken}}" }
             ],
             "url": "{{baseUrl}}/api/notifications/1/read"
           }

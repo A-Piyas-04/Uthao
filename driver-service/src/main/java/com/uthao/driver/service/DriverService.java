@@ -45,6 +45,11 @@ public class DriverService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Driver not found"));
     }
 
+    public Driver getDriverByUserId(Long userId) {
+        return driverRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No driver profile for this user"));
+    }
+
     public Vehicle addVehicle(Long driverId, VehicleRequest request) {
         getDriver(driverId);
         Vehicle vehicle = Vehicle.builder()
@@ -65,6 +70,12 @@ public class DriverService {
         status.setCurrentLat(dto.getCurrentLat());
         status.setCurrentLng(dto.getCurrentLng());
         return driverStatusRepository.save(status);
+    }
+
+    public DriverStatus getStatus(Long driverId) {
+        getDriver(driverId);
+        return driverStatusRepository.findByDriverId(driverId)
+                .orElse(DriverStatus.builder().driverId(driverId).status("OFFLINE").build());
     }
 
     public List<NearbyDriverDto> getNearbyAvailableDrivers(Double lat, Double lng, Double radiusKm) {

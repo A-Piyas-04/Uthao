@@ -140,9 +140,19 @@ You don’t need every service running while building your own — but for end-t
 ### 3. Import Postman
 
 1. Open Postman → Import → `postman/Uthao.postman_collection.json`
-2. Call **Register** or **Login**
-3. Copy `token` from the response into the collection variable `token`
-4. Other requests already send `Authorization: Bearer {{token}}`
+2. Click **Run collection** (Collection Runner) to fire the whole thing top-to-bottom,
+   or click through folders `01` → `07` one request at a time — the collection is one
+   ordered end-to-end sequence, not a flat list of examples.
+3. Nothing to edit: register requests use `{{$timestamp}}`-suffixed emails so the
+   collection is safe to re-run against the same database, and tokens/IDs
+   (`riderToken`, `driverToken`, `riderId`, `driverId`, `rideRequestId`, `tripId`,
+   `paymentId`) are captured automatically by test scripts into collection variables.
+4. One manual step: **"Get Trip By Ride Request"** polls for a trip that trip-service
+   creates *asynchronously* off a RabbitMQ event — if it 404s, just click Send again a
+   couple of times a second or two apart.
+5. The collection also includes negative tests proving driver-only trip actions and
+   the cancel-before-start rule (folder `05 - Trip Lifecycle`): a rider gets `403` on
+   start/complete, and `409` trying to cancel a trip that's already `ONGOING`.
 
 Base URL is `http://localhost:8080` (gateway). Paths look like `/api/auth/register`, `/api/riders/requests`, etc.
 

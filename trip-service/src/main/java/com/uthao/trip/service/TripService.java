@@ -40,7 +40,8 @@ public class TripService {
         return trip;
     }
 
-    public Trip startTrip(Long tripId) {
+    public Trip startTrip(Long tripId, String requesterRole) {
+        requireDriver(requesterRole);
         Trip trip = getTrip(tripId);
         trip.setStatus("ONGOING");
         trip.setStartedAt(LocalDateTime.now());
@@ -49,7 +50,8 @@ public class TripService {
         return trip;
     }
 
-    public Trip completeTrip(Long tripId) {
+    public Trip completeTrip(Long tripId, String requesterRole) {
+        requireDriver(requesterRole);
         Trip trip = getTrip(tripId);
         trip.setStatus("COMPLETED");
         trip.setCompletedAt(LocalDateTime.now());
@@ -73,6 +75,10 @@ public class TripService {
 
     public Trip cancelTrip(Long tripId) {
         Trip trip = getTrip(tripId);
+        if (!"MATCHED".equals(trip.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Trip can only be cancelled before it has started");
+        }
         trip.setStatus("CANCELLED");
         trip = tripRepository.save(trip);
         addHistory(tripId, "CANCELLED");
@@ -95,6 +101,12 @@ public class TripService {
         return tripRepository.findByRideRequestId(rideRequestId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "No trip created yet for this ride request"));
+    }
+
+    private void requireDriver(String requesterRole) {
+        if (!"DRIVER".equalsIgnoreCase(requesterRole)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the driver can perform this action");
+        }
     }
 
     private void addHistory(Long tripId, String status) {

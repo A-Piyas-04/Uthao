@@ -38,6 +38,11 @@ public class DriverController {
         return driverService.updateStatus(driverId, dto);
     }
 
+    @GetMapping("/{driverId}/status")
+    public DriverStatus getStatus(@PathVariable Long driverId) {
+        return driverService.getStatus(driverId);
+    }
+
     @GetMapping("/available")
     public List<NearbyDriverDto> getAvailable(
             @RequestParam Double lat,
@@ -49,6 +54,11 @@ public class DriverController {
     @GetMapping("/{driverId}")
     public Driver getDriver(@PathVariable Long driverId) {
         return driverService.getDriver(driverId);
+    }
+
+    @GetMapping("/by-user/{userId}")
+    public Driver getDriverByUserId(@PathVariable Long userId) {
+        return driverService.getDriverByUserId(userId);
     }
 
     @GetMapping("/{driverId}/trips")
