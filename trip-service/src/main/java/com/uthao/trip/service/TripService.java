@@ -91,6 +91,12 @@ public class TripService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found"));
     }
 
+    public Trip getTripByRideRequestId(Long rideRequestId) {
+        return tripRepository.findByRideRequestId(rideRequestId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "No trip created yet for this ride request"));
+    }
+
     private void addHistory(Long tripId, String status) {
         historyRepository.save(TripStatusHistory.builder()
                 .tripId(tripId)

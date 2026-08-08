@@ -17,6 +17,11 @@ public class TripController {
         return tripService.getTrip(tripId);
     }
 
+    @GetMapping("/by-request/{rideRequestId}")
+    public Trip getTripByRideRequest(@PathVariable Long rideRequestId) {
+        return tripService.getTripByRideRequestId(rideRequestId);
+    }
+
     @PostMapping("/{tripId}/start")
     public Trip startTrip(@PathVariable Long tripId) {
         return tripService.startTrip(tripId);
